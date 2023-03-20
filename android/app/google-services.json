@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "803545150534",
+    "project_id": "real-hostel",
+    "storage_bucket": "real-hostel.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803545150534:android:f45a1ea00f16c421c5c647",
+        "android_client_info": {
+          "package_name": "com.hostel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "803545150534-goq52g0q2ioq32ftvvgsv7ah2gmjhgt2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBweTNHwbpRA2ksbl0VN3jzTBhw1wQEFJM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "803545150534-goq52g0q2ioq32ftvvgsv7ah2gmjhgt2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
