@@ -76,7 +76,7 @@ const Login = () => {
       });
   };
 
-  const validatesignin = () => {
+  const validatesignin = async () => {
     if (email.length < 6 || password.length < 6) {
       toast.show({
         render: () => {
@@ -89,24 +89,20 @@ const Login = () => {
       });
       return;
     }
-    auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(() => {
-        toast.show({
-          render: () => {
-            return (
-              <Box bg="emerald.500" px="2" py="1" rounded="sm" mb={5}>
-                Logged in successfully
-              </Box>
-            );
-          },
-        });
-        setData(true);
+    const data = {
+      email: email,
+      password: password,
+    };
+    const res = await axios
+      .post('http://10.0.2.2:4000/login', data)
+      .then(res => {
+        console.log(res.data);
+        if (res.data.status === 200) {
+          setData(true);
+        }
       })
-      .catch(error => {
-        console.log(data);
-
-        console.error(error);
+      .catch(err => {
+        console.log(err);
       });
   };
 
