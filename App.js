@@ -2,11 +2,11 @@ import React, {useEffect, createContext, useState} from 'react';
 import database from '@react-native-firebase/database';
 import {Button, NativeBaseProvider, Box} from 'native-base';
 import LinearGradient from 'react-native-linear-gradient';
-import Login from './login';
-import AddFloor from './creatingfloor';
-import Addroom from './creatingrooms';
-import Addbed from './addingbed';
-import Home from './Home';
+import Login from './screens/login';
+import AddFloor from './screens/creatingfloor';
+import Addroom from './screens/creatingrooms';
+import Addbed from './screens/addingbed';
+import Home from './screens/Home';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
