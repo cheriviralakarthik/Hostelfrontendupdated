@@ -1,6 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+
+import {store} from '../App';
+
+import axios from 'axios';
 
 import {
   Button,
@@ -25,53 +29,96 @@ import {
 } from 'react-native';
 
 const Addroom = ({route, navigation}) => {
+  //state to store the data of rooms in a floor
   const [roomsdata, setRoomsdata] = useState([]);
+
+  //state to store the count of rooms in a floor calculated from api call
   const [countofrooms, setCountofrooms] = useState(0);
+
+  //bool to check if the data is fetched or not in noofrooms function
   const [bool, setbool] = useState(false);
+
+  //state to store the capacity of the room taken from user input
   const [capacity, setCapacity] = useState(null);
+
+  //state to store the roomno of the room taken from user input
   const [roomno, setRoomno] = useState(null);
+
+  //state to know if add room button clicked or not
   const [isOpen, setIsOpen] = useState(false);
 
-  const {floorid} = route.params;
-  var uid = auth().currentUser.uid;
+  //central state to store or retrieve the data
+  const [data, setData] = useContext(store);
 
+  //getting the floorno from the previous screen
+  const {floorno} = route.params;
+
+  //useEffect to call the noofrooms function when the screen is loaded
   useEffect(() => {
     noofrooms();
-  }, [roomsdata]);
+  }, []);
 
+  //function to get the no of rooms in a floor
   const noofrooms = async () => {
-    const data = await firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('Floors')
-      .doc(`${floorid}`)
-      .get();
-    const arr = Object.keys(data._data);
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+      };
 
-    setRoomsdata(arr);
-
-    setCountofrooms(arr.length);
-    setbool(true);
+      //api call to register route using 10.0.2.2 as ip because emulator will point the these ip to localhost
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/getrooms',
+        datatosend,
+      );
+      if (responce.status == 200) {
+        console.log(responce.data);
+        //setting the data to roomstate to render it
+        setRoomsdata(responce.data);
+        //setting the count of rooms
+        setCountofrooms(responce.data.length);
+        //setting the bool to true to render the data
+        setbool(true);
+      } else {
+        console.log('error in getting rooms');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const addroom = () => {
-    console.log('triggres');
-    firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('Floors')
-      .doc(`${floorid}`)
-      .update({
-        [roomno]: {
-          capacity: capacity,
-          availablebeds: capacity,
-        },
-      });
+  const addroom = async () => {
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+        roomno: roomno,
+        capacity: capacity,
+      };
+
+      //api call to addroom route using 10.0.2.2 as ip because emulator will point the these ip to localhost
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/addroom',
+        datatosend,
+      );
+      if (responce.status == 200) {
+        console.log(responce.data);
+        //calling the function to get the rooms again to render the added  room
+        noofrooms();
+      } else {
+        console.log('error add room');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <ScrollView>
       <Box alignItems="flex-end" margin="5px">
+        {/* popover for taking the capacity and roomno from user */}
         <Popover
           placement="left top"
           trigger={triggerProps => {
@@ -86,7 +133,7 @@ const Addroom = ({route, navigation}) => {
           <Popover.Content width="56">
             <Popover.Arrow />
             <Popover.CloseButton />
-            {/* @ts-ignore */}
+
             <Popover.Header>Enter the capacity of room</Popover.Header>
             <Popover.Body>
               <FormControl>
@@ -130,7 +177,7 @@ const Addroom = ({route, navigation}) => {
           </Popover.Content>
         </Popover>
       </Box>
-
+      {/* redering the roomsdata while itearting each and rendering using map */}
       {bool && (
         <Box alignItems="center" margin="10px">
           {roomsdata.map((da, index) => (
@@ -138,8 +185,8 @@ const Addroom = ({route, navigation}) => {
               <Pressable
                 onPress={() =>
                   navigation.navigate('Bed', {
-                    rono: da,
-                    flno: floorid,
+                    roomno: da,
+                    floorno: floorno,
                   })
                 }
                 rounded="8"

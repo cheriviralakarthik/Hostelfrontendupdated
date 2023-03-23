@@ -1,8 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
 
-import {store} from './App';
+import {store} from '../App';
 
 import {
   Button,
@@ -30,34 +28,48 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import axios from 'axios';
 
 //this is the home page
 const Home = ({navigation}) => {
+  //central data
   const [data, setData] = useContext(store);
+  //storing the data of the home fetched from the api
+  const [homedata, setHomedata] = useState(null);
+  //to check if the data is fetched or not
+  const [bool, setBool] = useState(false);
 
-  const toast = useToast();
+  //useEffect to fetch the data from the api on the first render
+  useEffect(() => {
+    gethome();
+  }, []);
 
-  //TODO:remove firebase auth to add api auth
+  //function to fetch the data from the api route getthehome
+  const gethome = async () => {
+    datatosend = {
+      id: data.id,
+    };
+    //getting the homedata from the api route getthehome
+    const responce = await axios.post(
+      'http://10.0.2.2:4000/getthehome',
+      datatosend,
+    );
+    //if the status is 200 then set the homedata and set the bool to true
+    if (responce.status == 200) {
+      setHomedata(responce.data);
+      setBool(true);
+    }
+  };
+
+  //function to signout
   const signout = () => {
     setData(false);
-    auth()
-      .signOut()
-      .then(() => {
-        toast.show({
-          render: () => {
-            return (
-              <Box bg="red.400" px="2" py="1" rounded="sm" mb={5}>
-                Logged out successfully
-              </Box>
-            );
-          },
-        });
-      });
   };
 
   return (
     <ScrollView>
-      <Box margin="5" justifyContent="flex-end" flexDirection="row">
+      {/* box contains logout button and create/view button to add floors or view floors*/}
+      <Box margin="3" justifyContent="flex-end" flexDirection="row">
         <Button
           variant="subtle"
           colorScheme="secondary"
@@ -70,6 +82,108 @@ const Home = ({navigation}) => {
           Create/View
         </Button>
       </Box>
+      {/* if the data is fetched then render  the data to the screen using map */}
+      {bool &&
+        homedata.map((floor, index) => (
+          <Box
+            key={index}
+            marginTop="5"
+            bg={{
+              linearGradient: {
+                colors: ['blue.300', 'blue.400'],
+                start: [0, 0],
+                end: [1, 0],
+              },
+            }}
+            rounded="sm">
+            <Heading
+              color="white"
+              size="md"
+              alignSelf="center">{`Floor:${floor.floorno}`}</Heading>
+            <ScrollView horizontal={true}>
+              <Box
+                marginBottom="5"
+                bg={{
+                  linearGradient: {
+                    colors: ['lightBlue.500', 'violet.800'],
+                    start: [0, 0],
+                    end: [1, 0],
+                  },
+                }}
+                rounded="xl"
+                _web={{
+                  shadow: 7,
+                  borderWidth: 5,
+                  borderColor: 'red.400',
+                }}
+                shadow="5"
+                flexDirection="row">
+                {floor.room.map((room, index) => (
+                  <Box
+                    key={index}
+                    margin="5"
+                    minWidth="150"
+                    minHeight="150"
+                    width="150"
+                    bg={{
+                      linearGradient: {
+                        colors: ['lightBlue.500', 'violet.800'],
+                        start: [0, 0],
+                        end: [1, 0],
+                      },
+                    }}
+                    rounded="xl"
+                    _web={{
+                      shadow: 7,
+                      borderWidth: 5,
+                      borderColor: 'red.400',
+                    }}
+                    _text={{
+                      fontSize: 'md',
+                      fontWeight: 'medium',
+                      color: 'warmGray.50',
+                    }}>
+                    <Heading color="white" size="sm" alignSelf="center">
+                      {`Room:${room.roomno}`}
+                    </Heading>
+
+                    <Divider
+                      bg="white"
+                      thickness="4"
+                      orientation="horizontal"
+                    />
+                    <Box justifyContent="center" alignItems="center" margin="5">
+                      <Box flexDirection="row">
+                        <Text color="success.500" marginRight="1" fontSize="md">
+                          ●
+                        </Text>
+                        <Text color="white" fontSize="md">
+                          {room.capacity}
+                        </Text>
+                      </Box>
+                      <Box flexDirection="row">
+                        <Text color="yellow.500" marginRight="1" fontSize="md">
+                          ●
+                        </Text>
+                        <Text color="white" fontSize="md">
+                          {room.notpaid}
+                        </Text>
+                      </Box>
+                      <Box flexDirection="row">
+                        <Text color="rose.500" marginRight="1" fontSize="md">
+                          ●
+                        </Text>
+                        <Text color="white" fontSize="md">
+                          {room.pp}
+                        </Text>
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </ScrollView>
+          </Box>
+        ))}
     </ScrollView>
   );
 };

@@ -2,7 +2,7 @@ import React, {useState, useContext} from 'react';
 import auth from '@react-native-firebase/auth';
 import {MaterialIcons} from 'react-native-vector-icons';
 
-import {store} from './App';
+import {store} from '../App';
 
 import {
   Button,
@@ -17,6 +17,7 @@ import {
   Icon,
   AddIcon,
   useToast,
+  VStack,
 } from 'native-base';
 
 import {
@@ -119,22 +120,26 @@ const Login = () => {
 
   return (
     <>
-      <Box alignItems="center" margin="20" justifyContent="center">
-        <Input
-          mx="3"
-          placeholder="Email"
-          w="100%"
-          onChangeText={e => setEmail(e)}
-        />
-        <Input
-          mt="5"
-          mx="3"
-          placeholder="Password"
-          w="100%"
-          type="password"
-          onChangeText={e => setPassword(e)}
-        />
-        <HStack margin="5px" space={3} justifyContent="center">
+      <Box
+        alignItems="center"
+        marginTop="35%"
+        ml="30"
+        mr="30"
+        borderRadius="lg"
+        shadow="6"
+        shadowColor="gray.800"
+        justifyContent="center"
+        backgroundColor="white">
+        <VStack margin="10px" space={3} justifyContent="center">
+          <Input placeholder="Email" w="100%" onChangeText={e => setEmail(e)} />
+          <Input
+            placeholder="Password"
+            w="100%"
+            type="password"
+            onChangeText={e => setPassword(e)}
+          />
+        </VStack>
+        <HStack margin="5px" space={5} justifyContent="center">
           <Button
             size="md"
             mt="4"

@@ -1,5 +1,9 @@
-import React, {useState, useEffect} from 'react';
-import auth from '@react-native-firebase/auth';
+import React, {useState, useEffect, useContext} from 'react';
+
+import {store} from '../App';
+
+import axios from 'axios';
+
 import {
   Button,
   Box,
@@ -14,7 +18,6 @@ import {
   Text,
   AlertDialog,
 } from 'native-base';
-import firestore from '@react-native-firebase/firestore';
 
 import {
   SafeAreaView,
@@ -26,131 +29,213 @@ import {
 } from 'react-native';
 
 const Addbed = ({route, navigation}) => {
-  const [showModal, setShowModal] = useState(false);
+  //central state to store or retrieve the data
+  const [data, setData] = useContext(store);
+
+  // collecting data from the user to add bed information
   const [name, setName] = useState(null);
   const [address, setAddress] = useState(null);
-  const [tdata, setTdata] = useState([]);
-  const [disname, setDisname] = useState(null);
-  const [disamounttype, setDisamounttype] = useState(null);
-  const [disamountpaid, setDisamountpaid] = useState(null);
-  const [] = useState(null);
-  // TODO:change age to aadhar
-  const [age, setAge] = useState(null);
+  const [aadhar, setAadhar] = useState(null);
   const [amountpaid, setAmountpaid] = useState(null);
+  const [typeofamountpaid, setTypeofamountpaid] = useState('notpaid');
+
+  //these three  states are used in noofbeds function to get the count of beds in a room
   const [bedsdata, setbedsdata] = useState([]);
   const [countofbeds, setCountofbeds] = useState(0);
   const [bool, setbool] = useState(false);
-  const [capacity, setcapacity] = useState(null);
-  const [value, setValue] = useState('notpaid');
 
+  //state to store the capacity of the room taken from user input
+  const [capacity, setcapacity] = useState(null);
+
+  //state to store the bed details when clicked on the bed box
+  const [beddetails, setBeddetails] = useState(null);
+
+  //to show the data of bed when clicked on the bed box
   const [isOpen, setIsOpen] = useState(false);
 
-  const onClose = () => setIsOpen(false);
-  const {rono, flno} = route.params;
-  var uid = auth().currentUser.uid;
-  var Availablebeds = capacity - countofbeds;
+  //to open input form to add bed
+  const [showModal, setShowModal] = useState(false);
 
+  const [showalertbox, setShowalertbox] = useState(false);
+
+  //param to get the floorno and roomno from the previous screen
+  const {roomno, floorno} = route.params;
+
+  //function to close the user input form to add bed details
+  const onClose = () => setIsOpen(false);
+
+  //useEffect to call the noofbeds function when the screen is loaded
   useEffect(() => {
     noofbeds();
-  }, [bedsdata]);
+  }, []);
 
+  //function to get the no of beds in a room
   const noofbeds = async () => {
-    const data = await firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('Floors')
-      .doc(`${flno}`)
-      .get();
-    const arr = Object.keys(data._data[rono]);
-    if (arr.length > 0) {
-      setcapacity(parseInt(data._data[rono].capacity));
-      setCountofbeds(arr.length - 2);
-      setbedsdata(
-        arr.filter(data => {
-          if (data != 'availablebeds' && data != 'capacity') return data;
-        }),
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+        roomno: roomno,
+      };
+
+      //api call to getbeds route using 10.0.2.2 as ip because emulator will point the these ip to localhost
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/getbeds',
+        datatosend,
       );
-    } else {
-      setbedsdata(arr);
-      setCountofbeds(0);
+      if (responce.status == 200) {
+        //calling the getcapacity function to get the capacity of the room
+        getcapacity();
+        console.log(responce.data);
+        //setting the data to bedstate to render it
+        setbedsdata(responce.data);
+        //setting the count of beds
+        setCountofbeds(responce.data.length);
+        //setting the bool to true to render the data
+        setbool(true);
+      } else {
+        console.log('error in getting beds');
+      }
+    } catch (error) {
+      console.log('error in getting beds');
+      console.log(error);
     }
-
-    setbool(true);
   };
 
-  const addbed = () => {
-    bedno = `b${countofbeds + 1}`;
-    var usersUpdate = {};
-    usersUpdate[`${rono}.${bedno}`] = {
-      Name: name,
-      address: address,
-      age: age,
-      Amountpaid: amountpaid,
-      Amounttype: value,
-    };
-    usersUpdate[`${rono}.availablebeds`] = Availablebeds - 1;
-    firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('Floors')
-      .doc(`${flno}`)
-      .update(usersUpdate);
+  //function to get the capacity of the room
+  const getcapacity = async () => {
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+        roomno: roomno,
+      };
+
+      //api call to getroomcapacity route
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/getroomcapacity',
+        datatosend,
+      );
+      if (responce.status == 200) {
+        console.log(responce.data[0]);
+        //setting the capacity to the state
+        setcapacity(responce.data[0]);
+      } else {
+        console.log('error in getting room capacity');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const sett = async pa => {
-    console.log('btrigger');
-    const data = await firestore()
-      .collection('users')
-      .doc(uid)
-      .collection('Floors')
-      .doc(`${flno}`)
-      .get();
+  //function to add the bed to the room
+  const addbed = async () => {
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+        roomno: roomno,
+        bedno: countofbeds + 1,
+        name: name,
+        address: address,
+        aadhar: aadhar,
+        amountpaid: amountpaid,
+        typeofamountpaid: typeofamountpaid,
+      };
 
-    console.log(pa);
-    let sedata = data._data[rono][pa];
-    console.log(sedata);
-    setDisname(sedata['Name']);
-    setDisamounttype(sedata['Amounttype']);
-    setAmountpaid(sedata['Amountpaid']);
+      //api call to addroom route using 10.0.2.2 as ip because emulator will point the these ip to localhost
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/addbed',
+        datatosend,
+      );
+      if (responce.status == 200) {
+        console.log(responce.data);
+        //calling the function to get the beds again to render the added  room
+        noofbeds();
+      } else {
+        console.log('error add room');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //function to get the details of the bed
+  const getbeddetails = async bedno => {
+    try {
+      //object to send the data via api call
+      const datatosend = {
+        id: data.id,
+        floorno: floorno,
+        roomno: roomno,
+        bedno: bedno,
+      };
+
+      //api call to getbeddetails route using
+      const responce = await axios.post(
+        'http://10.0.2.2:4000/thebeddetails',
+        datatosend,
+      );
+      if (responce.status == 200) {
+        console.log(responce.data);
+        setBeddetails(responce.data);
+        setShowalertbox(true);
+      }
+    } catch (error) {
+      console.log("error in getting bed's details");
+      console.log(error);
+    }
   };
 
   return (
     <>
       <ScrollView>
         <Box margin="10px" alignItems="center">
-          <Heading>{`Available beds  ${Availablebeds}`}</Heading>
+          <Heading>{`Available beds  ${capacity}`}</Heading>
         </Box>
         <Box alignItems="flex-end" margin="5">
           <Button onPress={() => setShowModal(true)}>Add Bed</Button>
         </Box>
-        <AlertDialog isOpen={isOpen} onClose={onClose}>
-          <AlertDialog.Content>
-            <AlertDialog.CloseButton />
-            <AlertDialog.Header>Bed Details</AlertDialog.Header>
-            <AlertDialog.Body>
-              <Text fontSize="md"> Name: {disname}</Text>
-              <Text fontSize="md"> Amounttype: {disamounttype}</Text>
-              <Text fontSize="md"> Amountpaid: {disamountpaid}</Text>
-            </AlertDialog.Body>
-            <AlertDialog.Footer>
-              <Button.Group space={2}>
-                <Button
-                  colorScheme="secondary"
-                  variant="outline"
-                  onPress={onClose}>
-                  Cancel
-                </Button>
-              </Button.Group>
-            </AlertDialog.Footer>
-          </AlertDialog.Content>
-        </AlertDialog>
+        {/* popover of alert box to show user details */}
+        {showalertbox && (
+          <AlertDialog isOpen={isOpen} onClose={onClose}>
+            <AlertDialog.Content>
+              <AlertDialog.CloseButton />
+              <AlertDialog.Header>Bed Details</AlertDialog.Header>
+              <AlertDialog.Body>
+                <Text fontSize="md"> Name: {beddetails.name}</Text>
+                <Text fontSize="md"> Amounttype: {beddetails.address}</Text>
+                <Text fontSize="md"> AadharNo: {beddetails.aadhar}</Text>
+                <Text fontSize="md">
+                  {' '}
+                  Typeofamount: {beddetails.typeofamountpaid}
+                </Text>
+                <Text fontSize="md"> Amountpaid: {beddetails.amountpaid}</Text>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button.Group space={2}>
+                  <Button
+                    colorScheme="secondary"
+                    variant="outline"
+                    onPress={onClose}>
+                    Cancel
+                  </Button>
+                </Button.Group>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
+        )}
+        {/* rendering the noofbeds  */}
         {bool && (
           <Box alignItems="center" margin="10px">
             {bedsdata.map((da, index) => (
               <Box key={index} margin="5px" width="50%">
                 <Pressable
                   onPress={() => {
-                    sett(da);
+                    getbeddetails(da);
                     setIsOpen(!isOpen);
                   }}
                   rounded="8"
@@ -173,6 +258,7 @@ const Addbed = ({route, navigation}) => {
         )}
       </ScrollView>
       <Center>
+        {/* popover for getting the user datails to add bed  */}
         <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
           <Modal.Content maxWidth="400px">
             <Modal.CloseButton />
@@ -188,7 +274,7 @@ const Addbed = ({route, navigation}) => {
               </FormControl>
               <FormControl mt="3">
                 <FormControl.Label>Aadhar no</FormControl.Label>
-                <Input onChangeText={e => setAge(e)} />
+                <Input onChangeText={e => setAadhar(e)} />
               </FormControl>
               <FormControl mt="3">
                 <FormControl.Label>amount paid</FormControl.Label>
@@ -198,9 +284,9 @@ const Addbed = ({route, navigation}) => {
                 margin="10px"
                 name="myRadioGroup"
                 accessibilityLabel="amount type"
-                value={value}
+                value={typeofamountpaid}
                 onChange={nextValue => {
-                  setValue(nextValue);
+                  setTypeofamountpaid(nextValue);
                 }}>
                 <Radio value="paid" my={1}>
                   paid
