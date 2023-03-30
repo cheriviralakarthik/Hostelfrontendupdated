@@ -85,27 +85,25 @@ const Home = ({navigation}) => {
       {/* if the data is fetched then render  the data to the screen using map */}
       {bool &&
         homedata.map((floor, index) => (
-          <Box
-            key={index}
-            marginTop="5"
-            bg={{
-              linearGradient: {
-                colors: ['blue.300', 'blue.400'],
-                start: [0, 0],
-                end: [1, 0],
-              },
-            }}
-            rounded="sm">
-            <Heading
-              color="white"
-              size="md"
-              alignSelf="center">{`Floor:${floor.floorno}`}</Heading>
+          <Box key={index} marginTop="5" backgroundColor="#d4f0fc" rounded="sm">
+            <Box
+              backgroundColor="cyan.200"
+              marginLeft="10"
+              marginRight="10"
+              marginTop="3"
+              marginBottom="3">
+              <Heading
+                fontFamily="monospace"
+                color="gray.500"
+                size="md"
+                alignSelf="center">{`Floor:${floor.floorno}`}</Heading>
+            </Box>
             <ScrollView horizontal={true}>
               <Box
                 marginBottom="5"
                 bg={{
                   linearGradient: {
-                    colors: ['lightBlue.500', 'violet.800'],
+                    colors: ['lightBlue.200', 'violet.300'],
                     start: [0, 0],
                     end: [1, 0],
                   },
@@ -127,7 +125,7 @@ const Home = ({navigation}) => {
                     width="150"
                     bg={{
                       linearGradient: {
-                        colors: ['lightBlue.500', 'violet.800'],
+                        colors: ['lightBlue.500', 'violet.600'],
                         start: [0, 0],
                         end: [1, 0],
                       },
